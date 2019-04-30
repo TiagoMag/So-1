@@ -25,7 +25,6 @@ struct stock{
 
 int main (int argc,char** argv){ 
  struct cliente aux;
- struct stock aux2;
  char Buffer2[100]; 
  char buff[PIPE_BUF];
     sprintf(buff,"%s%d","fifo",(int)getpid()); //passa um int para char
