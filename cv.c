@@ -21,36 +21,70 @@ struct stock{
 //retornar a quantidade em stock e o preco de um artigo
 
 
+ssize_t readln (int fd, void *buf, size_t nbyte) {
+    nbyte--;
+    char *cbuf = (char*) buf;
+    int i;
+    int rd=1;
+    off_t foundnl = 0;
 
+    rd = read (fd, cbuf, nbyte);
+    for (i = 0; i < rd; i++)
+        if (cbuf[i] == '\n'){
+            foundnl = 1;
+            break;
+        }
+    cbuf[i] = 0;
+    lseek (fd, (i - rd) + foundnl, SEEK_CUR);
+
+    return (foundnl == 1 ? i : -i);
+}
+
+
+int dividetoken(char* str,char* arr_token[]){
+ int j=0;
+ char* token;
+ token = strtok (str," ");
+ while (token != NULL){
+  arr_token[j]=strdup(token);
+  token = strtok (NULL, " ");
+  j++;
+ }
+ return j;
+}
 
 int main (int argc,char** argv){ 
  struct cliente aux;
  char Buffer2[100]; 
  char buff[PIPE_BUF];
-    sprintf(buff,"%s%d","fifo",(int)getpid()); //passa um int para char
-    mkfifo(buff,0666);
-char buffer[50]; //buffer que depois vai escrever no buffer do cliente
-int d;
-aux.pid=(int)getpid();
-     while(read(0,buffer,50)){
-int fd_fifo=open("fifo", O_WRONLY);
-    strcpy(aux.buffer,buffer); // escrever no buffer do cliente o do buffer anterior
-    write(fd_fifo,&aux,sizeof(struct cliente));
-    int clientfd=open(buff,O_RDONLY);
-    read(clientfd,&d,sizeof(d));
-    snprintf(Buffer2,sizeof(int),"%d",d); //int to string
-    write(1,Buffer2,strlen(Buffer2)); //write no  sdtdout
-    char *newline=strdup("\n");
-    write(1,newline,2);
-    close(fd_fifo);
-}
-//retornar a quantidade em stock e o preco de um artigo
-//int fd_stock = open ("STOCKS.txt",O_RDONLY);
-//float procurapreco (struct artigo *aux1,int fd2,int codigo)
+ sprintf(buff,"%s%d","fifo",(int)getpid()); //passa um int para char
+ mkfifo(buff,0666);
+ char buffer[50]; //buffer que depois vai escrever no buffer do cliente
+ int d;
+ int clientfd;
+ int fd_fifo;
+ aux.pid=(int)getpid();
+ fd_fifo=open("fifo", O_WRONLY);
+ while(readln(0,buffer,50)){
+  
+  // send message to server 
+  strcpy(aux.buffer,buffer); // escrever no buffer do cliente o do buffer anterior
+  write(fd_fifo,&aux,sizeof(struct cliente));
+  
 
-
-
-
-//close(fifo);
+  // read the answer
+  clientfd=open(buff,O_RDONLY);
+  read(clientfd,&d,sizeof(d));
+  //close(clientfd);
+  snprintf(Buffer2,sizeof(int),"%d",d); //int to string
+  write(1,Buffer2,strlen(Buffer2)); //write no  sdtdout
+  char *newline=strdup("\n");
+  write(1,newline,2);
+  //close(fd_fifo);
+  close(clientfd);
+    
+ }
+  close(fd_fifo);
+  //close(clientfd);
  return 0;
 }

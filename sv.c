@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h> 
+#include <signal.h>
+#include <errno.h>
 
 #define PIPE_BUF 1024
 
@@ -74,7 +76,8 @@ int updatestock (char* arr_token[],int pid){
    else if(quant<0) {aux.quant=aux.quant+quant;}
    if(aux.quant<0) {aux.quant=0;}
    lseek(fd1,counter-sizeof(struct stock),SEEK_SET);
-   write(fd1,&aux,sizeof(struct stock));	
+   write(fd1,&aux,sizeof(struct stock));  
+   break;  
   }
   n=read(fd1,&aux,sizeof(struct stock));
  }
@@ -86,7 +89,6 @@ int updatestock (char* arr_token[],int pid){
  write(fd1,&aux,sizeof(struct stock));
  }
  if (close (fd1)<0) write(1,"ERRO\n",5);
-
  return aux.quant;
 }
 
@@ -97,7 +99,7 @@ float procurapreco (struct artigo *aux1,int fd2,int codigo){
  while(n>0){ //procura onde se encontra o codigo no artigos
   if (aux1->codigo==codigo) {preco=aux1->preco;break;}
   n=read(fd2,aux1,sizeof(struct artigo));
-  if (n==0) {puts("erro");return 1;}
+  if (n==0) {puts("erro");return -1;}
  }
  return preco;
 }
@@ -115,8 +117,12 @@ int addVenda (char* arrtoken[]){
  aux->quant=quant;
  preco=procurapreco(aux1,fd2,codigo);
  aux->ptotal=preco*(float)aux->quant;
+  char buff[1024];
+  sprintf(buff,"%d %d %f\n ",codigo,quant,aux->ptotal);
+  puts(buff);
  if (quant<0){
-  write(fd1,aux,sizeof(struct venda));
+  lseek(fd1,0,SEEK_END);
+  write(fd1,&buff,strlen(buff));
  }
   if (close (fd1)<0) write(1,"ERRO\n",5);
   if (close (fd2)<0) write(1,"ERRO\n",5);
@@ -124,25 +130,37 @@ int addVenda (char* arrtoken[]){
 }
 
 int main(int argc,char** argv){
-struct cliente aux2;
-//char buffer[PIPE_BUF];
-char* token;
-int d;
-if (mkfifo("fifo",0666 )==-1) write(1,"ERRO\n",5);
-while(1){
- int fifo=open("fifo",O_RDONLY);
- read_pipe(&fifo,"fifo",&aux2,sizeof(struct cliente));
- token=strtok(aux2.buffer,"\n");
- dividetoken(token,arr_token);
- if (arr_token[2]==NULL){
- addVenda(arr_token);
- if (!addVenda(arr_token))  d=updatestock(arr_token,aux2.pid);
- char buff[PIPE_BUF];
- sprintf(buff,"%s%d","fifo",aux2.pid);
- int fifo=open(buff,O_WRONLY);
- write(fifo,&d,sizeof(d));
- close(fifo);
- }
-}
+  struct cliente aux2;
+  char* token;
+  int d;
+  int fifo;
+  int fdfifo;
+  if (mkfifo("fifo",0666 )==-1); //write(1,"ERRO\n",5);
+  fifo=open("fifo",O_RDONLY);
+  /* Let's find out about broken client pipe via failed write() */
+
+  if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
+
+  while(1){
+    //get message
+    read_pipe(&fifo,"fifo",&aux2,sizeof(struct cliente));
+    //read(fifo,&aux2,sizeof(struct cliente));
+    token=strtok(aux2.buffer,"\n");
+    dividetoken(token,arr_token);
+    if (arr_token[2]==NULL && strcmp(arr_token[0],"^C")!=0){
+      addVenda(arr_token);
+      //if (!addVenda(arr_token)) 
+      d=updatestock(arr_token,aux2.pid);
+      char buff[PIPE_BUF];
+      sprintf(buff,"%s%d","fifo",aux2.pid);
+ 
+      //send message
+      fdfifo=open(buff,O_WRONLY);
+      write(fdfifo,&d,sizeof(d));
+      close(fdfifo);
+    }
+  }
+// close(fifo);
+// close(fdfifo);
  return 0;
 }
