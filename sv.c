@@ -118,41 +118,28 @@ return aux.quant;
 int seestock(char* arr_token[],int pid){
 struct stock aux;
 struct artigo *aux1=malloc(sizeof(struct artigo));
-int found=0,n=0,value,i=0;
+int n=0,value,i=0;
 int fd2=open("artigos.txt",O_CREAT|O_RDWR,0666);
 int fd1=open("stocks.txt",O_CREAT|O_RDWR,0666);
        if(fd1<0) perror("ERRO");
-    int codigo=atoi(arr_token[0]);
-    int quant=atoi(arr_token[1]);
+   // int codigo=atoi(arr_token[0]); ?
+   // int quant=atoi(arr_token[1]); ?
     int counter=0;
     n=read(fd1,&aux,sizeof(struct stock));
       if (procuracodigo(aux1,fd2,codigo)<0) return -1;
-        else {
-        while(n>0){ //procura onde se existe o artigo no stocks
-        counter+=n;
-      if (aux.codigo==codigo) {
-      found=1;
-         
+      else {
+        while(n>0){ //procura onde e se existe o artigo no stocks
+          if (aux.codigo==codigo) {
+          value=aux.quant; break;
+          }
+          else {
+          perror("stock inexistente") ;
         }
-        
     }
+return value;
 }
 
-    counter=0;
-    i=read(fd2,&aux1,sizeof(struct artigos));
-      if (procuracodigo(aux1,fd2,codigo)<0)return -1;
-      else{
-      while(n>0){
-        counter+=n;
-      if (aux.codigo==codigo) {
-        found=1;
-      value=procurapreco(artigo *aux1,fd2,codigo){
-             }
-          }  
-      }   
-
-return 0;
-}
+   
 */
 
 int showstock (struct stock *aux,int fd1, int codigo){
@@ -181,21 +168,20 @@ return stock;
 }
 
 float procurapreco (struct artigo *aux1,int fd2,int codigo){
- int n;
- float preco;
- n=read(fd2,aux1,sizeof(struct artigo));
- while(n>0){ //procura onde se encontra o codigo no artigos
-  if (aux1->codigo==codigo) {preco=aux1->preco;break;}
-  n=read(fd2,aux1,sizeof(struct artigo));
-  if (n==0) {return -1;}
- }
- return preco;
+int n;
+float preco;
+n=read(fd2,aux1,sizeof(struct artigo));
+    while(n>0){ //procura onde se encontra o codigo no artigos
+      if (aux1->codigo==codigo) {preco=aux1->preco;break;}
+    n=read(fd2,aux1,sizeof(struct artigo));
+      if (n==0) {return -1;}
+    }
+return preco;
 }
 
 int addVenda (char* arrtoken[]){
 struct venda *aux=malloc(sizeof(struct venda));
 struct artigo *aux1=malloc(sizeof(struct artigo)); 
-
 float preco;
 int fd1=open("vendas.txt",O_CREAT|O_RDWR,0666);
 int fd2=open("artigos.txt",O_CREAT|O_RDWR,0666);
@@ -228,36 +214,36 @@ return 0;
 }
 
 int main(int argc,char** argv){
-  struct cliente aux2;
-  char* token;
-  int d;
-  int fifo;
-  int fdfifo;
-  if (mkfifo("fifo",0666 )==-1); //write(1,"ERRO\n",5);
-  fifo=open("fifo",O_RDONLY);
-  /* Let's find out about broken client pipe via failed write() */
+struct cliente aux2;
+char* token;
+int d;
+int fifo;
+int fdfifo;
+    if (mkfifo("fifo",0666 )==-1); //write(1,"ERRO\n",5);
+    fifo=open("fifo",O_RDONLY);
+    /* Let's find out about broken client pipe via failed write() */
 
-  if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
+    if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
 
-  while(1){
+    while(1){
     //get message
     read_pipe(&fifo,"fifo",&aux2,sizeof(struct cliente));
     //read(fifo,&aux2,sizeof(struct cliente));
     token=strtok(aux2.buffer,"\n");
     dividetoken(token,arr_token);
-    if (arr_token[2]==NULL && strcmp(arr_token[0],"^C")!=0){
-      if (addVenda(arr_token)==-1) puts("Codigo not found");
-      //if (!addVenda(arr_token)) 
-      //d=updatestock(arr_token,aux2.pid);
-      char buff[PIPE_BUF];
-      sprintf(buff,"%s%d","fifo",aux2.pid);
-      //if (updatestock(arr_token,aux2.pid)==-1) puts("Codigo not found"); 
-      //send message
-      if ((d=updatestock(arr_token,aux2.pid))>=0){
-      fdfifo=open(buff,O_WRONLY);
-      write(fdfifo,&d,sizeof(d));
-      close(fdfifo);
-    }else puts("Codigo no found");
+      if (arr_token[2]==NULL && strcmp(arr_token[0],"^C")!=0){
+          if (addVenda(arr_token)==-1) puts("Codigo not found");
+          //if (!addVenda(arr_token)) 
+          //d=updatestock(arr_token,aux2.pid);
+          char buff[PIPE_BUF];
+          sprintf(buff,"%s%d","fifo",aux2.pid);
+          //if (updatestock(arr_token,aux2.pid)==-1) puts("Codigo not found"); 
+          //send message
+          if ((d=updatestock(arr_token,aux2.pid))>=0){
+          fdfifo=open(buff,O_WRONLY);
+          write(fdfifo,&d,sizeof(d));
+          close(fdfifo);
+          }else puts("Codigo no found");
     }
   }
 // close(fifo);
