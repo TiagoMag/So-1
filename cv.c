@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <signal.h>
 #define PIPE_BUF 1024
 
 struct cliente{
@@ -18,6 +19,13 @@ struct stock{
  int quant;
 };
 
+void ctrlc_handler (int signum){
+ int size=sizeof(int)+4*sizeof(char);
+ char buff[size];
+ sprintf(buff,"%s%d","fifo",(int)getpid()); 
+ unlink(buff);
+ exit(0);
+}
 
 ssize_t readln (int fd, void *buf, size_t nbyte) {
     nbyte--;
@@ -65,9 +73,10 @@ char BUFF[100],buff[PIPE_BUF];
 sprintf(buff,"%s%d","fifo",(int)getpid());//passa um int para char
 mkfifo(buff,0666);
 char buffer[50];//buffer que depois vai escrever no buffer do cliente
-int d,clientfd, fd_fifo;
+int clientfd, fd_fifo;
 struct request r;
 aux.pid=(int)getpid();
+signal(SIGINT,ctrlc_handler);
 fd_fifo=open("fifo", O_WRONLY);
     while(readln(0,buffer,50)){
         // send message to server 
@@ -78,21 +87,22 @@ fd_fifo=open("fifo", O_WRONLY);
         // read the answer
         clientfd=open(buff,O_RDONLY);
         read(clientfd,&r,sizeof(struct request));
-        
+        close(clientfd);
         //close(clientfd);
         snprintf(BUFF,sizeof(int),"%d",r.stock); //int to string
         write(1,BUFF,strlen(BUFF)); //write no  sdtdout
-        if (r.preco>0){
+       if (r.preco>0){
         char *newline=strdup("\n");
         write(1,newline,2);
-        snprintf(BUFF,sizeof(float),"%f",r.preco); //int to string
-        write(1,BUFF,strlen(BUFF)); //write no  sdtdout 
+        char buf[16];
+        sprintf(buf, "%0.2lf", r.preco);  //int to string
+        write(1,buf,strlen(buf)); //write no  sdtdout 
         
         }
         char *newline=strdup("\n");
         write(1,newline,2);
         //close(fd_fifo);
-    close(clientfd);
+   
     }
     close(fd_fifo);
 return 0;
