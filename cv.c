@@ -52,40 +52,12 @@ return j;
 }
 
 
-//efectuar vendas ou entrada em stock, especificando o código e quantidade 
 
+struct request{
+int stock;
+float preco;
 
-//int vendstok(int argc, char* argv[]){
-
-//!!
-
-/*
-int showstok (int argc, char* argv[]){
-struct stock aux;
-char BUFF[100], buff[PIPE_BUF]; 
-sprintf(buff,"%s%d","fifo",(int)getpid());//passa um int para char
-mkfifo(buff,0666);
-char buffer[50];//buffer que depois vai escrever no buffer do cliente
-int d, stockfd, fd_fifo;
-  aux.pid=(int)getpid();  
-  fd_fifo=open("fifo", O_WRONLY);
-      while(readln(0,buffer,50)){// send message to server 
-          strcpy(aux.,buffer); // escrever no buffer do cliente o do buffer anterior
-          write(fd_fifo,&aux,sizeof(struct stock));
-          // read the answer
-          stockfd=open(buff,O_RDONLY);
-          read(stockfd,&d,sizeof(d));
-          //close(stockfd);
-          snprintf(BUFF,sizeof(int),"%d",d); //int to string
-          write(1,BUFF,strlen(BUFF)); //write no  sdtdout
-          char *newline=strdup("\n");
-          write(1,newline,2);
-          //close(fd_fifo);
-      close(stockfd);
-         }
-return 0;
-}
-*/
+};
 
 int main (int argc,char** argv){
 struct cliente aux;
@@ -94,22 +66,34 @@ sprintf(buff,"%s%d","fifo",(int)getpid());//passa um int para char
 mkfifo(buff,0666);
 char buffer[50];//buffer que depois vai escrever no buffer do cliente
 int d,clientfd, fd_fifo;
+struct request r;
 aux.pid=(int)getpid();
 fd_fifo=open("fifo", O_WRONLY);
     while(readln(0,buffer,50)){
         // send message to server 
-        strcpy(aux.buffer,buffer); // escrever no buffer do cliente o do buffer anterior
+        strcpy(aux.buffer,buffer); 
+       
+        // escrever no buffer do cliente o do buffer anterior
         write(fd_fifo,&aux,sizeof(struct cliente));
         // read the answer
         clientfd=open(buff,O_RDONLY);
-        read(clientfd,&d,sizeof(d));
+        read(clientfd,&r,sizeof(struct request));
+        
         //close(clientfd);
-        snprintf(BUFF,sizeof(int),"%d",d); //int to string
+        snprintf(BUFF,sizeof(int),"%d",r.stock); //int to string
         write(1,BUFF,strlen(BUFF)); //write no  sdtdout
+        if (r.preco>0){
+        char *newline=strdup("\n");
+        write(1,newline,2);
+        snprintf(BUFF,sizeof(float),"%f",r.preco); //int to string
+        write(1,BUFF,strlen(BUFF)); //write no  sdtdout 
+        
+        }
         char *newline=strdup("\n");
         write(1,newline,2);
         //close(fd_fifo);
     close(clientfd);
     }
+    close(fd_fifo);
 return 0;
 }
