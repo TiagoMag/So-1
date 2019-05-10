@@ -1,0 +1,28 @@
+Algumas notas sobre a make:
+
+Está a dar erro pq temos main em todos os programas.
+
+Fui ao stackoverflow e deram-nos estes conselhos:
+
+1: " Your Makefile looks fine - I can't see any problems with it as such[*]. The problem is your code that you're compiling.
+Take a look at one of the errors you're getting:
+
+obj/src/sv.o: In function `main':
+sv.c:(.text+0xcb5): multiple definition of `main'
+obj/src/ag.o:ag.c:(.text+0x6ef): first defined here
+
+That is saying that you have a file called "sv.c" that has a function called main in it.
+And that you have another file called "ag.c" that also has a function called main in it.
+You're trying to compile both those files into the same program, but you're only allowed to have one function called main.
+
+[*] At a guess it looks like you've got several programs living in your "src" directory and your
+Makefile is trying to build everything into one giant program.
+If this is the case you need to either separate the code into their own directories or change your
+Makefile so that SOURCES only lists the source files that are relevant to the program you're compiling."
+
+2: "SOURCES = $(wildcard $(SDIR)/*.c). Always a bad idea to blindly grab all source files that happen to exist.
+Specify the the sources of your program by name in your makefile."
+
+Ao que eu passei a meter => SOURCES := ag.c sv.c cv.c ma.c e começou a dar o erro:
+
+"make:*** No rule to make target 'obj/ag.o', needed by 'program'. Stop."
