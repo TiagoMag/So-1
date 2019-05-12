@@ -16,7 +16,7 @@
 void ctrlc_handler (int signum){
  int size=sizeof(int)+4*sizeof(char);
  char buff[size];
- sprintf(buff,"%s%d","/tmp/fifo",(int)getpid()); 
+ sprintf(buff,"%s%d","tmp/fifo",(int)getpid()); 
  unlink(buff);
  exit(0);
 }
@@ -28,7 +28,7 @@ int main (int argc,char** argv){
 
  char BUFF[1024],buff[PIPE_BUF],buffer[1024]; 
  
- sprintf(buff,"%s%d","/tmp/fifo",(int)getpid());//criar nome para o fifo do cliente
+ sprintf(buff,"%s%d","tmp/fifo",(int)getpid());//criar nome para o fifo do cliente
  if(mkfifo(buff,0666)<0)
  perror("Problema a criar o fifo");
  
@@ -38,8 +38,8 @@ int main (int argc,char** argv){
  
  signal(SIGINT,ctrlc_handler);
  
- if((server_fifo=open("/tmp/fifo", O_WRONLY))==-1)
-  {perror("Criar fifo");}
+ if((server_fifo=open("tmp/fifo", O_WRONLY))==-1)
+  {perror("Criar fifo OLE");}
   
   while(readln(0,buffer,50)){
        

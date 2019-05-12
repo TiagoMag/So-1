@@ -279,8 +279,10 @@ int main(int argc,char** argv){
  
  preenchetop();
 
- if (mkfifo("/tmp/fifo",0666 )==-1); //criar fifo do servidor 
- server_fifo=open("/tmp/fifo",O_RDONLY);
+  //criar fifo do servidor 
+  if(mkfifo("tmp/fifo",0666)<0)
+ perror("Problema a criar o fifo");
+ server_fifo=open("tmp/fifo",O_RDONLY);
  
  fifo2=open("precochange", O_RDONLY|O_NONBLOCK);
 
@@ -293,7 +295,7 @@ int main(int argc,char** argv){
     if (c.flag==1) alterarray(c.preco,c.codigo);
    
     //close(fifo2);
-    //read_pipe(&fifo,"fifo",&aux2,sizeof(struct cliente));
+    //read_pipe(&server_fifo,"tmp/fifo",&mc,sizeof(struct message_client));
     
     //lê mensagem do cliente 
     read(server_fifo,&mc,sizeof(struct message_client));
@@ -306,7 +308,7 @@ int main(int argc,char** argv){
     struct request_client r;
     char buff[1024];
     
-    sprintf(buff,"%s%d","/tmp/fifo",mc.pid);
+    sprintf(buff,"%s%d","tmp/fifo",mc.pid);
     
     if((r.stock=seestock(arr_token))>=0){
     
@@ -331,7 +333,7 @@ int main(int argc,char** argv){
     struct request_client r;
    
     char buff[PIPE_BUF];
-    sprintf(buff,"%s%d","/tmp/fifo",mc.pid);
+    sprintf(buff,"%s%d","tmp/fifo",mc.pid);
  
     if ((r.stock=updatestock(arr_token,mc.pid))>=0){
     
