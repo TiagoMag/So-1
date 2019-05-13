@@ -13,7 +13,7 @@
 #include "global.h"
 
 #define Campos_Token 3
-#define TOP 100000
+#define TOP 5
 
 char* arr_token[Campos_Token];
 struct top topvendas[TOP];
@@ -54,7 +54,7 @@ int agregador(int flag){
 
   dup2(fd1,1);
   dup2(fd2,0);   
-  execl("ag3","ag3",NULL);
+  execl("ag","ag",NULL);
   close(fd1);
   close(fd2);
   
