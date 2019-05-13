@@ -196,7 +196,7 @@ float procurapreco (struct artigo *aux,int fd,int codigo){
    n=read(fd,aux,sizeof(struct artigo));
    if (n==0) {return -1;}
   }
-
+close(fd);
 return preco;
 }
 
@@ -286,9 +286,9 @@ int addVenda (char* arrtoken[]){
  venda->codigo=codigo;
  venda->quant=quant;
  
- //preco=procuratop(codigo); //ve se preço está na cache
+ preco=procuratop(codigo); //ve se preço está na cache
  
- //if(preco==-1)
+ if(preco==-1)
  preco=procurapreco(art,fd2,codigo); //vê se preço está em artigos
  
  if (preco<0) return -1; //se não está em artigos não existe
@@ -330,7 +330,7 @@ int main(int argc,char** argv){
  
  signal(SIGINT,ctrlc_handler);
 
- //preenchetop();
+ preenchetop();
 
   //criar fifo do servidor 
  if(mkfifo("tmp/fifo",0666)==-1 &&(errno != EEXIST))
@@ -339,7 +339,7 @@ int main(int argc,char** argv){
  
  fifo2=open("precochange", O_RDONLY|O_NONBLOCK);
 
- //if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
+ if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
       
  while(1){
     
