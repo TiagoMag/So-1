@@ -6,11 +6,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <wait.h>
+#include <time.h>
 #include "global.h"
 
 #define Campos_Token 4
 
 char* arr_token[Campos_Token];
+
 
 //i <nome> <preço> 
 int insere(char** argv){
@@ -48,8 +51,8 @@ lseek(fd3,0,SEEK_SET);
  lseek(fd3,0,SEEK_SET);
  write(fd3,&lixo,sizeof(struct lixo));
 
- close(fd3);
-  
+ 
+  if (close (fd3)<0) write(1,"ERRO\n",5);
   if (close (fd1)<0) write(1,"ERRO\n",5);
   if (close (fd2)<0) write(1,"ERRO\n",5);
   
@@ -94,32 +97,30 @@ lseek(fd3,0,SEEK_SET);
  art.codigo=codigo;
  art.preco=preco;
  
+ write(fd1,&art,sizeof(struct artigo));
  
- lseek(fd2,atoi(argv[1])-1,SEEK_SET);
- 
+ lseek(fd2,atoi(argv[1])-1,SEEK_SET); //posiciona o cursor no antigo nome do artigo
  
  char buffer[1024];
 
-
-BufferSize= readln2(fd2,buffer,1024)+1;
+ BufferSize= readln2(fd2,buffer,1024)+1; //lê tamanho do nome antigo do artigo
  
- 
-
-
-
-
-
- write(fd1,&art,sizeof(struct artigo));//altera o codigo antigo para o novo codigo
  struct lixo lixo;
+ 
  int fd3=open("lixo.txt",O_CREAT|O_RDWR,0666);
+ 
  lseek(fd3,0,SEEK_SET);
+ 
  read(fd3,&lixo,sizeof(struct lixo));
- lixo.lixo=lixo.lixo+BufferSize;
- lixo.total=lseek(fd2,0,SEEK_END);
+ 
+ lixo.lixo=lixo.lixo+BufferSize; //atualiza o "lixo" no strings.txt
+ lixo.total=lseek(fd2,0,SEEK_END); // tamanho total do ficheiro strings.txt
+ 
  lseek(fd3,0,SEEK_SET);
+ 
  write(fd3,&lixo,sizeof(struct lixo));
 
- close(fd3);
+ if (close (fd3)<0) write(1,"ERRO\n",5);
  if (close (fd1)<0) write(1,"ERRO\n",5);
  if (close (fd2)<0) write(1,"ERRO\n",5);
  
@@ -158,6 +159,9 @@ float alterapreco(char** argv){
  return preco;
 }
 
+
+
+
 int main(int argc,char** argv){
  
  struct mudaPreco mp;
@@ -171,9 +175,9 @@ int main(int argc,char** argv){
  while(readln(0,buffer,1024)){
   
   token=strtok(buffer,"\n");
-  dividetoken(token,arr_token);
+  dividetoken2(token,arr_token);
   
-  if (arr_token[3]!=NULL||arr_token[2]==NULL||arr_token[0]==NULL||arr_token[1]==NULL) 
+  if (arr_token[3]!=NULL||arr_token[2]==NULL||arr_token[1]==NULL) 
    
    {puts("Comando invalido");}
  
@@ -191,8 +195,8 @@ int main(int argc,char** argv){
     break;
   
     case('p'):
-    newpreco=alterapreco(arr_token);
-    fd_fifo=open("precochange", O_WRONLY);
+    newpreco=alterapreco(arr_token);  
+    fd_fifo=open("precochange", O_WRONLY);// comunicar alteração de preço ao servidor
     mp.flag=1;
     mp.codigo=atoi(arr_token[1]);
     mp.preco=newpreco;
@@ -204,7 +208,7 @@ int main(int argc,char** argv){
    write(1,"ERRO\n",5);
   }
  }
-}
 
+}
  return 0;
 }

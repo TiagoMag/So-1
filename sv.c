@@ -9,15 +9,62 @@
 #include <signal.h>
 #include <errno.h>
 #include <wait.h>
+#include <time.h>
 #include "global.h"
 
-#define PIPE_BUF 1024
 #define Campos_Token 3
 #define TOP 100000
 
 char* arr_token[Campos_Token];
 struct top topvendas[TOP];
 
+void ctrlc_handler (int signum){
+ 
+ int size=sizeof(char)*8;
+ char buff[size];
+ sprintf(buff,"%s","tmp/fifo"); 
+ unlink(buff);
+ exit(0);
+
+}
+
+int agregador(int flag){
+
+ int fd1;
+ 
+ time_t rawtime;
+ struct tm * timeinfo;
+ time ( &rawtime );
+ timeinfo = localtime ( &rawtime );
+
+ 
+ char filename[1024];
+ char filename2[1024];
+ sprintf(filename,"%s","gr.txt"); 
+ sprintf(filename2,"%d-%d-%d%s%d:%d:%d",timeinfo->tm_year + 1900,timeinfo->tm_mon + 1,timeinfo->tm_mday,"T", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
+ if (flag==0) fd1=open(filename,O_CREAT|O_WRONLY,0666);
+ else fd1=open(filename2,O_CREAT|O_WRONLY,0666);
+
+ int fd2;
+ fd2=open("vendas.txt",O_RDONLY,0666);
+ 
+  if ((fork())==0){
+   
+
+  dup2(fd1,1);
+  dup2(fd2,0);   
+  execl("ag3","ag3",NULL);
+  close(fd1);
+  close(fd2);
+  
+  }else{wait(NULL);}
+ 
+ 
+
+ return 0;
+
+}
 
 int procuracodigo (struct artigo *aux,int fd,int codigo){
  
@@ -93,13 +140,13 @@ int seestock(char* arr_token[]){
  int codigo=atoi(arr_token[0]);
 
 if(fd<0) perror("ERRO");  
-  while((n=read(fd,&stock,sizeof(struct stock)))>0){ //procura onde se encontra o codigo no artigos
-    if (stock.codigo==codigo) {value=stock.quant; break;}
-      if (n==0) {
-      return -1;
-      }   
+n=read(fd,&stock,sizeof(struct artigo));
+ while(n>0){ //procura onde se encontra o codigo no artigos
+   if (stock.codigo==codigo) {value=stock.quant;break;}
+   n=read(fd,&stock,sizeof(struct stock));
+   if (n==0) {return -1;}
+  }
     
-    }
  if(close(fd)<0)perror("ERRO");
 
  return value;
@@ -115,17 +162,13 @@ float procurapreco_main (char* arr_token[]){
  int fd=open("artigos.txt",O_RDONLY);
  int codigo=atoi(arr_token[0]);
   
-  if(fd<0) perror ("ERRO");
-    while((n=read(fd,&art,sizeof(struct artigo)))>0){ //procura onde se encontra o codigo no artigos
-      if (art.codigo==codigo){
-      preco=art.preco;
+  n=read(fd,&art,sizeof(struct artigo));
 
-      } 
-      if (n==0) {
-      return -1;
-      }
-  
-    }
+  while(n>0){ //procura onde se encontra o codigo no artigos
+   if (art.codigo==codigo) {preco=art.preco;break;}
+   n=read(fd,&art,sizeof(struct artigo));
+   if (n==0) {return -1;}
+  }
 
  if(close(fd)<0)perror("ERRO");
  
@@ -150,9 +193,8 @@ return preco;
 }
 
 int preenchetop(){
- 
-  pid_t pid;
- 
+ssize_t pid;
+agregador(1);
   if ((pid=fork())==0){
     
     int fd1 = open ("gr.txt",O_RDONLY);
@@ -219,7 +261,7 @@ return preco;
 }
 
 int addVenda (char* arrtoken[]){
- 
+ if (atoi(arr_token[1])<0){
  struct venda *venda=malloc(sizeof(struct venda));
  struct artigo *art=malloc(sizeof(struct artigo)); 
  
@@ -254,7 +296,7 @@ int addVenda (char* arrtoken[]){
  
  if (close (fd1)<0) write(1,"ERRO\n",5);
  if (close (fd2)<0) write(1,"ERRO\n",5);
- 
+ }
  return 0;
 }
 
@@ -263,10 +305,11 @@ int alterarray(float preco,int codigo ){
  for(int i=0;i<20;i++){
   if(topvendas[i].codigo==codigo) {topvendas[i].preco=preco; break;}
  }
-
+ 
  return 0;
 
 }
+
 
 //--
 int main(int argc,char** argv){
@@ -277,65 +320,78 @@ int main(int argc,char** argv){
  int server_fifo,client_fifo,fifo2;
  struct mudaPreco c;
  
+ signal(SIGINT,ctrlc_handler);
+ 
  preenchetop();
 
   //criar fifo do servidor 
-  if(mkfifo("tmp/fifo",0666)<0)
+ if(mkfifo("tmp/fifo",0666)<0)
  perror("Problema a criar o fifo");
  server_fifo=open("tmp/fifo",O_RDONLY);
  
  fifo2=open("precochange", O_RDONLY|O_NONBLOCK);
 
- if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
+ //if (signal(SIGPIPE,SIG_IGN) == SIG_ERR) printf("Erro: %s\n", strerror(errno));
       
-  while(1){
+ while(1){
     
    
     read(fifo2,&c,sizeof(struct mudaPreco));
     if (c.flag==1) alterarray(c.preco,c.codigo);
    
-    //close(fifo2);
+   
     //read_pipe(&server_fifo,"tmp/fifo",&mc,sizeof(struct message_client));
     
     //lê mensagem do cliente 
     read(server_fifo,&mc,sizeof(struct message_client));
-    
+
     token=strtok(mc.buffer,"\n");
     dividetoken2(token,arr_token);
     
-    if(arr_token[0]!=NULL && arr_token[1]==NULL){ // ex 0->mostra preco e stock
+    
+    if ((strcmp(arr_token[0],"a"))==0){
+    agregador(0);
+    struct request_client r;
+    r.stock=-1;  
+ 
+    char buff[1024];
+    client_fifo=open(buff,O_WRONLY);
+    write(client_fifo,&r,sizeof(struct request_client));
+    close(client_fifo);
+    }
+    
+
+    else if(arr_token[0]!=NULL && arr_token[1]==NULL){ // ex 0->mostra preco e stock
     
     struct request_client r;
     char buff[1024];
     
     sprintf(buff,"%s%d","tmp/fifo",mc.pid);
     
-    if((r.stock=seestock(arr_token))>=0){
-    
+    if((r.stock=seestock(arr_token))<0){
+    r.stock=-1;puts("Codigo not found");
     }
 
-    if((r.preco=procurapreco_main(arr_token))>=0){   // se nao exister preco codigo nao existe
-     
+    if((r.preco=procurapreco_main(arr_token))<0){r.preco=-1;puts("Codigo not found");}   // se nao exister preco codigo nao existe
+    
      client_fifo = open(buff,O_WRONLY);
      write(client_fifo,&r,sizeof(struct request_client));
      close(client_fifo);
     
-    }
-    else 
-    puts("Codigo not available");
+
   
     }
     
     else if (arr_token[0]!=NULL && arr_token[1]!=NULL && arr_token[2]==NULL){
     
-    if (addVenda(arr_token)==-1) puts("Codigo not found");
+    struct request_client r; 
     
-    struct request_client r;
-   
-    char buff[PIPE_BUF];
+    if (addVenda(arr_token)==-1) {r.preco=-1;puts("Codigo not found"); }
+    
+    char buff[1024];
     sprintf(buff,"%s%d","tmp/fifo",mc.pid);
  
-    if ((r.stock=updatestock(arr_token,mc.pid))>=0){
+    if ((r.stock=updatestock(arr_token,mc.pid))<0){r.stock=-1;puts("Codigo not found"); }
     
     r.preco=-1;   
 
@@ -344,8 +400,8 @@ int main(int argc,char** argv){
     close(client_fifo);
 
 
-    }
-    else puts("Codigo no found");                     
+    
+                         
     } 
     
   }

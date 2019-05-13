@@ -39,15 +39,23 @@ int crianovapos(struct artigo art){
  close(fd1);
 
 return codigo;
+
 }
 
+//função para detetar se o "lixo" é 20% do ficheiro strings
 int vinteporcento(){
-struct lixo lixo;
-int fd3=open("lixo.txt",O_CREAT|O_RDWR,0666);
+ 
+ struct lixo lixo;
+ 
+ int fd3=open("lixo.txt",O_CREAT|O_RDWR,0666);
+ 
  lseek(fd3,0,SEEK_SET);
+ 
  read(fd3,&lixo,sizeof(struct lixo));
  if (lixo.total*0.2==lixo.lixo) return 1;
+ 
  close(fd3);
+
 return 0;
 
 }
@@ -55,22 +63,26 @@ return 0;
 
 int main(){
 
- if (vinteporcento()){
- int fd1=open("artigos.txt",O_CREAT|O_RDWR,0666);
-
-
- struct artigo art;
- int n; 
- int count=0;
- while((n=read(fd1,&art,sizeof(struct artigo)))>0){ //procura onde se encontra o codigo no artigos
-  count+=n;
-  art.codigo=crianovapos(art);
-  lseek(fd1,count-sizeof(struct artigo),SEEK_SET);
-  write(fd1,&art,sizeof(struct artigo));
- }}
+  if (vinteporcento()){
+ 
+  struct artigo art;
+  int n; 
+  int count=0;
+ 
+  int fd1=open("artigos.txt",O_CREAT|O_RDWR,0666);
+ 
+  while((n=read(fd1,&art,sizeof(struct artigo)))>0){ //procura onde se encontra o codigo no artigos
+   count+=n;
+   art.codigo=crianovapos(art);
+   lseek(fd1,count-sizeof(struct artigo),SEEK_SET);
+   write(fd1,&art,sizeof(struct artigo));
+  }
+ }
+ 
  unlink("strings.txt");
  rename("strings2.txt","strings.txt");
 
 
 return 0;	
+
 }
