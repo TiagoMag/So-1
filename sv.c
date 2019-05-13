@@ -135,20 +135,28 @@ int updatestock (char* arr_token[],int pid){
 int seestock(char* arr_token[]){
  
  struct stock stock;
+ struct artigo *art=malloc(sizeof(struct artigo));
  int n=0,value;
+ 
  int fd=open("stocks.txt",O_RDONLY);
+ int fd2=open("artigos.txt",O_CREAT|O_RDWR,0666);
+ 
  int codigo=atoi(arr_token[0]);
 
 if(fd<0) perror("ERRO");  
 n=read(fd,&stock,sizeof(struct artigo));
- while(n>0){ //procura onde se encontra o codigo no artigos
+ while(n>0){ //procura onde se encontra o stock nos stocks
    if (stock.codigo==codigo) {value=stock.quant;break;}
    n=read(fd,&stock,sizeof(struct stock));
-   if (n==0) {return -1;}
+   if (n==0) {value=0;}
   }
-    
- if(close(fd)<0)perror("ERRO");
+ 
 
+ if (procuracodigo(art,fd2,codigo)<0) return -1; //ver se codigo existe   
+ 
+ if(close(fd)<0)perror("ERRO");
+ if(close(fd2)<0)perror("ERRO");
+ 
  return value;
 
 }
@@ -278,9 +286,9 @@ int addVenda (char* arrtoken[]){
  venda->codigo=codigo;
  venda->quant=quant;
  
- preco=procuratop(codigo); //ve se preço está na cache
+ //preco=procuratop(codigo); //ve se preço está na cache
  
- if(preco==-1)
+ //if(preco==-1)
  preco=procurapreco(art,fd2,codigo); //vê se preço está em artigos
  
  if (preco<0) return -1; //se não está em artigos não existe
@@ -322,7 +330,7 @@ int main(int argc,char** argv){
  
  signal(SIGINT,ctrlc_handler);
  
- preenchetop();
+ //preenchetop();
 
   //criar fifo do servidor 
  if(mkfifo("tmp/fifo",0666)<0)
