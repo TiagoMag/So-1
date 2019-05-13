@@ -33,7 +33,7 @@ int main (int argc,char** argv){
  signal(SIGINT,ctrlc_handler);
 
  sprintf(buff,"%s%d","tmp/fifo",(int)getpid());//criar nome para o fifo do cliente
- if(mkfifo(buff,0666)<0)
+ if(mkfifo(buff,0666)==-1 && (errno != EEXIST)) 
  perror("Problema a criar o fifo");
  
  int client_fifo, server_fifo;

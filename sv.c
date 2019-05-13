@@ -137,7 +137,7 @@ int seestock(char* arr_token[]){
  struct stock stock;
  struct artigo *art=malloc(sizeof(struct artigo));
  int n=0,value;
- 
+
  int fd=open("stocks.txt",O_RDONLY);
  int fd2=open("artigos.txt",O_CREAT|O_RDWR,0666);
  
@@ -329,11 +329,11 @@ int main(int argc,char** argv){
  struct mudaPreco c;
  
  signal(SIGINT,ctrlc_handler);
- 
+
  //preenchetop();
 
   //criar fifo do servidor 
- if(mkfifo("tmp/fifo",0666)<0)
+ if(mkfifo("tmp/fifo",0666)==-1 &&(errno != EEXIST))
  perror("Problema a criar o fifo");
  server_fifo=open("tmp/fifo",O_RDONLY);
  
