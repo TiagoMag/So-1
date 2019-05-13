@@ -119,8 +119,7 @@ for (int m = 1; m < forks+1; m++,offset+=100000) {
    int i=0;
    int p;
    int lines2=lines+1;
-  printf("Lines %d\n",lines );
-  printf("Lines2 %d\n",lines2 );
+ 
    int z=0;
         int h=0; 
  
