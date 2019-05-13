@@ -52,8 +52,8 @@ int agregador(int flag){
   if ((fork())==0){
    
 
-  dup2(fd1,1);
-  dup2(fd2,0);   
+  dup2(fd1,0);
+  dup2(fd2,1);   
   execl("ag","ag",NULL);
   close(fd1);
   close(fd2);
