@@ -98,7 +98,7 @@ int updatestock (char* arr_token[],int pid){
  int quant=atoi(arr_token[1]);
  int counter=0;
  
- if (procuracodigo(art,fd2,codigo)<0) return -1; //ver se codigo existe
+ if (procuracodigo(art,fd2,codigo)<0){ close(fd2); close(fd1); return -1;} //ver se codigo existe
  
  while((n=read(fd1,&stock,sizeof(struct stock)))>0){ //procura onde e se existe o artigo no stocks
   
@@ -152,7 +152,7 @@ n=read(fd,&stock,sizeof(struct artigo));
   }
  
 
- if (procuracodigo(art,fd2,codigo)<0) return -1; //ver se codigo existe   
+ if (procuracodigo(art,fd2,codigo)<0){close (fd); close(fd2); return -1;} //ver se codigo existe   
  
  if(close(fd)<0)perror("ERRO");
  if(close(fd2)<0)perror("ERRO");
@@ -175,7 +175,7 @@ float procurapreco_main (char* arr_token[]){
   while(n>0){ //procura onde se encontra o codigo no artigos
    if (art.codigo==codigo) {preco=art.preco;break;}
    n=read(fd,&art,sizeof(struct artigo));
-   if (n==0) {return -1;}
+   if (n==0) {close(fd);return -1; }
   }
 
  if(close(fd)<0)perror("ERRO");
@@ -194,7 +194,7 @@ float procurapreco (struct artigo *aux,int fd,int codigo){
   while(n>0){ //procura onde se encontra o codigo no artigos
    if (aux->codigo==codigo) {preco=aux->preco;break;}
    n=read(fd,aux,sizeof(struct artigo));
-   if (n==0) {return -1;}
+   if (n==0) {close(fd); return -1;}
   }
 close(fd);
 return preco;
@@ -291,7 +291,7 @@ int addVenda (char* arrtoken[]){
  if(preco==-1)
  preco=procurapreco(art,fd2,codigo); //vê se preço está em artigos
  
- if (preco<0) return -1; //se não está em artigos não existe
+ if (preco<0){ close(fd1); close(fd2);return -1;} //se não está em artigos não existe
  
  venda->ptotal=abs(preco*(float)venda->quant);
  

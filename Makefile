@@ -13,7 +13,7 @@ cv:global
 	$(CC) $(CFLAGS) cv.c -o cv global.o
 
 compact:global
-	$(CC) $(CFLAGS) compact.c -o comapact global.o
+	$(CC) $(CFLAGS) compact.c -o compact global.o
 
 ag:global
 	$(CC) $(CFLAGS) ag.c -o ag global.o

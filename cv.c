@@ -41,7 +41,7 @@ int main (int argc,char** argv){
  c.pid=(int)getpid();
  
  if((server_fifo=open("tmp/fifo", O_WRONLY))==-1)
-  {perror("Criar fifo OLE");}
+  {perror("Criar fifo");}
   
   while(readln(0,buffer,50)){
        
