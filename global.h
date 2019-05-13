@@ -54,6 +54,5 @@ int dividetoken(char* str,char* arr_token[]);
 
 int dividetoken2(char* str,char* arr_token[]);
 
-int read_pipe(int* fd,char* path,void* buf,int bufsize);
 
 #endif

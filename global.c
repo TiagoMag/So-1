@@ -72,14 +72,3 @@ ssize_t readln2 (int fd, void *buf, size_t nbyte) {
     return (foundnl == 1 ? i : -i);
 }
 
-int read_pipe(int* fd,char* path,void* buf,int bufsize){
-int rd=read(*fd,buf,bufsize);
-  
-  if (rd<=0)  {
-  close(*fd);
-  *fd = open(path,O_RDONLY,066);
-  rd=read(*fd,buf,bufsize);
-  }
-
-return rd;
-}

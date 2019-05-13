@@ -340,7 +340,7 @@ int main(int argc,char** argv){
     if (c.flag==1) alterarray(c.preco,c.codigo);
    
    
-    //read_pipe(&server_fifo,"tmp/fifo",&mc,sizeof(struct message_client));
+   
     
     //lê mensagem do cliente 
     read(server_fifo,&mc,sizeof(struct message_client));
